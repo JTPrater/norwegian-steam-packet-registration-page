@@ -19,6 +19,22 @@
             <a href="index.html" class="registration-link"
               >Back to Registration</a
             >
+            <!-- Hidden admin access (invisible to users) -->
+            <span
+              id="hiddenAdminAccess"
+              style="
+                position: absolute;
+                left: -9999px;
+                opacity: 0.01;
+                cursor: pointer;
+              "
+              onclick="
+                document.querySelector('.passenger-list').classList.contains('admin-mode')
+                  ? null
+                  : document.getElementById('adminLogin').style.display='flex'
+              "
+              >.</span
+            >
           </p>
         </div>
       </header>
@@ -49,6 +65,35 @@
             <p>Total Passengers: <span id="passengerCount">0</span></p>
           </div>
 
+          <!-- Hidden Admin Panel -->
+          <div id="adminPanel" class="admin-panel" style="display: none">
+            <div class="admin-header">
+              <h3>🔑 Admin Mode Active</h3>
+              <button id="exitAdminBtn" class="exit-admin-btn">
+                Exit Admin Mode
+              </button>
+            </div>
+            <p>
+              Delete buttons are now visible. Click any red delete button to
+              remove a passenger.
+            </p>
+          </div>
+
+          <!-- Admin Login (Hidden by default) -->
+          <div id="adminLogin" class="admin-login" style="display: none">
+            <div class="admin-login-content">
+              <h3>Admin Access</h3>
+              <p>Enter admin password:</p>
+              <input
+                type="password"
+                id="adminPassword"
+                placeholder="Password"
+              />
+              <button id="adminLoginBtn">Login</button>
+              <button id="cancelAdminBtn">Cancel</button>
+            </div>
+          </div>
+
           <div class="passenger-table-container">
             <table class="passenger-table">
               <thead>
@@ -60,6 +105,7 @@
                   <th>Date of Birth</th>
                   <th>Luggage</th>
                   <th>Registration Date</th>
+                  <th class="admin-only" style="display: none">Actions</th>
                 </tr>
               </thead>
               <tbody id="passengerTableBody">
@@ -88,5 +134,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     <script src="firebase-config.js"></script>
     <script src="list.js"></script>
+
+    <!-- Secret admin key hint (only visible to you) -->
+    <div class="key-hint">Ctrl+Shift+A+D+M+I+N</div>
   </body>
 </html>

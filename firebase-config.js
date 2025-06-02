@@ -52,27 +52,54 @@ window.FirebaseService = {
       return { success: false, error: error.message };
     }
   },
-
   // Get all passengers with real-time updates
   onPassengersChange(callback) {
     const passengersRef = database.ref("passengers");
     const listener = passengersRef.on("value", (snapshot) => {
       const data = snapshot.val();
-      const passengers = data ? Object.values(data) : [];
+      const passengers = data
+        ? Object.keys(data).map((key) => ({
+            ...data[key],
+            firebaseKey: key, // Add Firebase key for deletion
+          }))
+        : [];
       callback(passengers);
     });
 
     return listener;
   },
 
-  // Remove a passenger (admin function)
-  async removePassenger(passengerKey) {
+  // Remove a passenger by Firebase key (Admin only)
+  async removePassenger(firebaseKey) {
     try {
-      const passengerRef = database.ref(`passengers/${passengerKey}`);
+      const passengerRef = database.ref(`passengers/${firebaseKey}`);
       await passengerRef.remove();
       return { success: true };
     } catch (error) {
       console.error("Error removing passenger:", error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  // Remove a passenger by their ID (Admin only)
+  async removePassengerById(passengerId) {
+    try {
+      const passengersRef = database.ref("passengers");
+      const snapshot = await passengersRef
+        .orderByChild("id")
+        .equalTo(passengerId)
+        .once("value");
+      const data = snapshot.val();
+
+      if (data) {
+        const firebaseKey = Object.keys(data)[0];
+        await this.removePassenger(firebaseKey);
+        return { success: true };
+      } else {
+        return { success: false, error: "Passenger not found" };
+      }
+    } catch (error) {
+      console.error("Error removing passenger by ID:", error);
       return { success: false, error: error.message };
     }
   },

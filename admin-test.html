@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Key Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background: #f0f0f0;
+      }
+      .test-container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 600px;
+      }
+      .debug {
+        background: #f8f9fa;
+        padding: 10px;
+        margin: 10px 0;
+        border-left: 4px solid #007bff;
+        font-family: monospace;
+      }
+      .admin-login {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .admin-login-content {
+        background-color: white;
+        padding: 30px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      }
+      .admin-login-content input {
+        width: 200px;
+        padding: 10px;
+        margin: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+      }
+      .admin-login-content button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        margin: 5px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="test-container">
+      <h1>🔑 Admin Key Combination Test</h1>
+
+      <h3>Instructions:</h3>
+      <ol>
+        <li>Hold <strong>Ctrl + Shift</strong></li>
+        <li>While holding them, type: <strong>A D M I N</strong></li>
+        <li>Or click the "Test Admin Login" button below</li>
+      </ol>
+
+      <button onclick="showAdminLogin()">Test Admin Login (Direct)</button>
+      <button onclick="clearDebug()">Clear Debug</button>
+
+      <h3>Debug Info:</h3>
+      <div id="debug"></div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminLogin" class="admin-login" style="display: none">
+      <div class="admin-login-content">
+        <h3>Admin Access</h3>
+        <p>Enter admin password:</p>
+        <input
+          type="password"
+          id="adminPassword"
+          placeholder="NorwegianSteam2025!"
+        />
+        <br />
+        <button onclick="handleAdminLogin()">Login</button>
+        <button onclick="hideAdminLogin()">Cancel</button>
+      </div>
+    </div>
+
+    <script>
+      let keySequence = [];
+      const secretSequence = ["a", "d", "m", "i", "n"];
+
+      function addDebug(message) {
+        const debug = document.getElementById("debug");
+        const time = new Date().toLocaleTimeString();
+        debug.innerHTML += `<div class="debug">[${time}] ${message}</div>`;
+        debug.scrollTop = debug.scrollHeight;
+      }
+
+      function clearDebug() {
+        document.getElementById("debug").innerHTML = "";
+      }
+
+      // Setup secret key combination with detailed logging
+      document.addEventListener("keydown", (e) => {
+        addDebug(
+          `Key pressed: ${e.key} | Ctrl: ${e.ctrlKey} | Shift: ${e.shiftKey}`
+        );
+
+        // Only activate if Ctrl+Shift is held
+        if (e.ctrlKey && e.shiftKey) {
+          const key = e.key.toLowerCase();
+          addDebug(`Valid combo key: ${key}`);
+
+          // Add key to sequence
+          keySequence.push(key);
+          addDebug(`Key sequence: [${keySequence.join(", ")}]`);
+
+          // Keep only the last 5 keys
+          if (keySequence.length > 5) {
+            keySequence.shift();
+            addDebug(`Trimmed sequence: [${keySequence.join(", ")}]`);
+          }
+
+          // Check if sequence matches
+          if (
+            keySequence.length === 5 &&
+            keySequence.join("") === secretSequence.join("")
+          ) {
+            addDebug(`🎉 MATCH! Showing admin login...`);
+            showAdminLogin();
+            keySequence = []; // Reset sequence
+            e.preventDefault();
+          }
+        } else {
+          // Reset sequence if Ctrl+Shift not held
+          if (keySequence.length > 0) {
+            addDebug(`Resetting sequence (Ctrl+Shift not held)`);
+            keySequence = [];
+          }
+        }
+      });
+
+      function showAdminLogin() {
+        addDebug("Showing admin login modal");
+        const adminLogin = document.getElementById("adminLogin");
+        const adminPassword = document.getElementById("adminPassword");
+
+        if (adminLogin) {
+          adminLogin.style.display = "flex";
+          if (adminPassword) {
+            adminPassword.focus();
+            adminPassword.value = "";
+          }
+        }
+      }
+
+      function hideAdminLogin() {
+        addDebug("Hiding admin login modal");
+        const adminLogin = document.getElementById("adminLogin");
+        if (adminLogin) {
+          adminLogin.style.display = "none";
+        }
+      }
+
+      function handleAdminLogin() {
+        const adminPassword = document.getElementById("adminPassword");
+        const correctPassword = "NorwegianSteam2025!";
+
+        if (adminPassword && adminPassword.value === correctPassword) {
+          addDebug("✅ Password correct! Admin access granted.");
+          alert("Admin login successful!");
+          hideAdminLogin();
+        } else {
+          addDebug("❌ Incorrect password");
+          alert("Incorrect password!");
+          if (adminPassword) {
+            adminPassword.value = "";
+            adminPassword.focus();
+          }
+        }
+      }
+
+      // Test on page load
+      addDebug("Page loaded. Ready for key combination test.");
+      addDebug("Try: Hold Ctrl+Shift and type A-D-M-I-N");
+    </script>
+  </body>
+</html>

@@ -4,12 +4,61 @@ class PassengerList {
   constructor() {
     this.passengers = [];
     this.filteredPassengers = [];
+    this.isAdmin = false;
+    this.adminIP = ""; // Will be set to your IP
     this.init();
   }
+  
   init() {
+    // Check admin status first
+    this.checkAdminStatus();
     // Wait for Firebase to be available, then load passengers
     this.waitForFirebase();
     this.setupEventListeners();
+  }
+  // Check if current user is admin based on IP
+  async checkAdminStatus() {
+    try {
+      // Your IP address - replace with your actual IP
+      const allowedAdminIPs = [
+        "108.77.151.214", // Your actual IP address
+        "127.0.0.1",    // localhost for testing
+        "::1"           // IPv6 localhost
+      ];
+
+      // Check if we're running locally first
+      const isLocalhost = window.location.hostname === 'localhost' || 
+                         window.location.hostname === '127.0.0.1' || 
+                         window.location.hostname === '::1';
+
+      if (isLocalhost) {
+        console.log("🏠 Running on localhost - Admin access granted");
+        this.isAdmin = true;
+        this.activateAdminMode();
+        return;
+      }
+
+      // If not localhost, check public IP
+      const response = await fetch('https://api.ipify.org?format=json');
+      const data = await response.json();
+      const userIP = data.ip;
+      
+      console.log(`User IP: ${userIP}`);
+      
+      // Check if user IP is in admin list
+      this.isAdmin = allowedAdminIPs.includes(userIP);
+      
+      if (this.isAdmin) {
+        console.log("🔑 Admin access granted based on IP");
+        this.activateAdminMode();
+      } else {
+        console.log("👤 Regular user access");
+      }
+      
+    } catch (error) {
+      console.error("Could not verify IP:", error);
+      this.isAdmin = false;
+    }
   }
 
   // Wait for Firebase to be available
@@ -67,14 +116,202 @@ class PassengerList {
     // Clear filters
     if (clearFiltersBtn) {
       clearFiltersBtn.addEventListener("click", () => this.clearFilters());
-    } // Refresh button (Firebase updates automatically, but keep for manual refresh)
+    }
+
+    // Refresh button
     const refreshBtn = document.getElementById("refreshBtn");
     if (refreshBtn) {
       refreshBtn.addEventListener("click", () => {
-        // Firebase automatically updates, but this can force a re-render
         this.handleSearch();
       });
     }
+
+    // Admin functionality setup
+    this.setupAdminListeners();
+    this.setupSecretKeyCombo();
+  }
+
+  // Setup admin-specific event listeners
+  setupAdminListeners() {
+    const adminLoginBtn = document.getElementById("adminLoginBtn");
+    const cancelAdminBtn = document.getElementById("cancelAdminBtn");
+    const exitAdminBtn = document.getElementById("exitAdminBtn");
+    const adminPassword = document.getElementById("adminPassword");
+
+    if (adminLoginBtn) {
+      adminLoginBtn.addEventListener("click", () => this.handleAdminLogin());
+    }
+
+    if (cancelAdminBtn) {
+      cancelAdminBtn.addEventListener("click", () => this.hideAdminLogin());
+    }
+
+    if (exitAdminBtn) {
+      exitAdminBtn.addEventListener("click", () => this.exitAdminMode());
+    }
+
+    if (adminPassword) {
+      adminPassword.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          this.handleAdminLogin();
+        }
+        if (e.key === "Escape") {
+          this.hideAdminLogin();
+        }
+      });
+    }
+  }
+  // Setup secret key combination (Ctrl+Shift+A+D+M+I+N)
+  setupSecretKeyCombo() {
+    let keySequence = [];
+    const secretSequence = ["a", "d", "m", "i", "n"];
+    let clickCount = 0;
+    let clickTimer = null;
+
+    // Method 1: Key combination
+    document.addEventListener("keydown", (e) => {
+      // Debug logging (remove in production)
+      console.log(`Key: ${e.key}, Ctrl: ${e.ctrlKey}, Shift: ${e.shiftKey}`);
+
+      // Only activate if Ctrl+Shift is held
+      if (e.ctrlKey && e.shiftKey) {
+        const key = e.key.toLowerCase();
+        console.log(`Valid combo key: ${key}`);
+
+        // Add key to sequence
+        keySequence.push(key);
+        console.log(`Current sequence: [${keySequence.join(", ")}]`);
+
+        // Keep only the last 5 keys
+        if (keySequence.length > 5) {
+          keySequence.shift();
+        }
+
+        // Check if sequence matches
+        if (
+          keySequence.length === 5 &&
+          keySequence.join("") === secretSequence.join("")
+        ) {
+          console.log("🎉 Admin key sequence matched!");
+          this.showAdminLogin();
+          keySequence = []; // Reset sequence
+          e.preventDefault();
+        }
+      } else {
+        // Reset sequence if Ctrl+Shift not held
+        keySequence = [];
+      }
+
+      // Method 2: Simple backup - Ctrl+Alt+Delete (but don't actually delete)
+      if (e.ctrlKey && e.altKey && e.key.toLowerCase() === "delete") {
+        console.log("🎉 Admin backup key detected!");
+        this.showAdminLogin();
+        e.preventDefault();
+      }
+
+      // Method 3: Another backup - F12 + Ctrl
+      if (e.ctrlKey && e.key === "F12") {
+        console.log("🎉 Admin F12 backup detected!");
+        this.showAdminLogin();
+        e.preventDefault();
+      }
+    });
+
+    // Method 4: Triple-click on passenger count as backup
+    const passengerCount = document.getElementById("passengerCount");
+    if (passengerCount) {
+      passengerCount.addEventListener("click", () => {
+        clickCount++;
+
+        if (clickTimer) {
+          clearTimeout(clickTimer);
+        }
+
+        clickTimer = setTimeout(() => {
+          clickCount = 0;
+        }, 1000); // Reset after 1 second
+
+        if (clickCount === 5) {
+          // 5 clicks
+          console.log("🎉 Admin triple-click detected!");
+          this.showAdminLogin();
+          clickCount = 0;
+        }
+      });
+    }
+  }
+
+  // Show admin login modal
+  showAdminLogin() {
+    const adminLogin = document.getElementById("adminLogin");
+    const adminPassword = document.getElementById("adminPassword");
+
+    if (adminLogin) {
+      adminLogin.style.display = "flex";
+      if (adminPassword) {
+        adminPassword.focus();
+        adminPassword.value = "";
+      }
+    }
+  }
+
+  // Hide admin login modal
+  hideAdminLogin() {
+    const adminLogin = document.getElementById("adminLogin");
+    if (adminLogin) {
+      adminLogin.style.display = "none";
+    }
+  }
+
+  // Handle admin login
+  handleAdminLogin() {
+    const adminPassword = document.getElementById("adminPassword");
+    const correctPassword = "NorwegianSteam2025!"; // Change this to your preferred password
+
+    if (adminPassword && adminPassword.value === correctPassword) {
+      this.activateAdminMode();
+      this.hideAdminLogin();
+      adminPassword.value = "";
+    } else {
+      alert("Incorrect password!");
+      if (adminPassword) {
+        adminPassword.value = "";
+        adminPassword.focus();
+      }
+    }
+  }
+
+  // Activate admin mode
+  activateAdminMode() {
+    document.body.classList.add("admin-mode");
+    const adminPanel = document.getElementById("adminPanel");
+    if (adminPanel) {
+      adminPanel.style.display = "block";
+    }
+
+    // Re-render passengers to show delete buttons
+    this.displayPassengers();
+
+    console.log("Admin mode activated");
+  }
+
+  // Exit admin mode
+  exitAdminMode() {
+    document.body.classList.remove("admin-mode");
+    const adminPanel = document.getElementById("adminPanel");
+    if (adminPanel) {
+      adminPanel.style.display = "none";
+    }
+
+    // Re-render passengers to hide delete buttons
+    this.displayPassengers();
+
+    console.log("Admin mode deactivated");
+  }
+
+  // Check if admin mode is active
+  isAdminMode() {
+    return document.body.classList.contains("admin-mode");
   }
 
   // Handle search functionality
@@ -205,12 +442,22 @@ class PassengerList {
       });
     } else {
       luggageCell.textContent = "No luggage";
-    }
-
-    // Registration date cell
+    } // Registration date cell
     const regDateCell = document.createElement("td");
     const regDate = new Date(passenger.registrationDate);
     regDateCell.textContent = regDate.toLocaleDateString();
+
+    // Actions cell (admin only)
+    const actionsCell = document.createElement("td");
+    actionsCell.className = "actions-cell admin-only";
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "delete-btn";
+    deleteBtn.innerHTML = "🗑️ Delete";
+    deleteBtn.title = "Delete this passenger";
+    deleteBtn.onclick = () => this.confirmDeletePassenger(passenger);
+
+    actionsCell.appendChild(deleteBtn);
 
     // Append all cells to row
     row.appendChild(avatarCell);
@@ -220,25 +467,61 @@ class PassengerList {
     row.appendChild(dobCell);
     row.appendChild(luggageCell);
     row.appendChild(regDateCell);
+    row.appendChild(actionsCell);
 
     return row;
   }
 
-  // Method to delete a passenger (for admin use)
-  async deletePassenger(passengerId) {
-    try {
-      const response = await fetch(`/api/passengers/${passengerId}`, {
-        method: "DELETE",
-      });
+  // Confirm passenger deletion with dialog (admin only)
+  confirmDeletePassenger(passenger) {
+    if (!this.isAdminMode()) {
+      console.error("Delete attempted without admin privileges");
+      return;
+    }
 
-      if (response.ok) {
-        // Reload the passenger list
-        await this.loadPassengers();
+    const passengerName = `${passenger.forename} ${passenger.surname}`;
+    const confirmed = confirm(
+      `⚠️ ADMIN ACTION ⚠️\n\nAre you sure you want to delete passenger "${passengerName}"?\n\nThis action cannot be undone and will permanently remove this passenger from the manifest.`
+    );
+
+    if (confirmed) {
+      this.deletePassenger(passenger);
+    }
+  }
+
+  // Delete a passenger (admin only)
+  async deletePassenger(passenger) {
+    if (!this.isAdminMode()) {
+      console.error("Delete attempted without admin privileges");
+      alert("Access denied. Admin privileges required.");
+      return;
+    }
+
+    try {
+      let result;
+
+      // Try to delete using Firebase key first (more efficient)
+      if (passenger.firebaseKey) {
+        result = await window.FirebaseService.removePassenger(
+          passenger.firebaseKey
+        );
       } else {
-        console.error("Failed to delete passenger");
+        // Fallback to ID-based deletion
+        result = await window.FirebaseService.removePassengerById(passenger.id);
+      }
+
+      if (result.success) {
+        console.log("Passenger deleted successfully by admin");
+        // The real-time listener will automatically update the display
+      } else {
+        console.error("Failed to delete passenger:", result.error);
+        alert("Failed to delete passenger. Please try again.");
       }
     } catch (error) {
       console.error("Error deleting passenger:", error);
+      alert(
+        "An error occurred while deleting the passenger. Please try again."
+      );
     }
   }
 }
