@@ -24,7 +24,7 @@ If the IP-based system fails, you can still use:
 
 1. **Secret Key Combination**: Hold `Ctrl + Shift` and type `A-D-M-I-N`
 2. **Admin Password**: `NorwegianSteam2025!`
-3. **Alternative Keys**: 
+3. **Alternative Keys**:
    - `Ctrl + Alt + Delete`
    - `Ctrl + F12`
    - Click passenger count 5 times

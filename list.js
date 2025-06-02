@@ -8,7 +8,7 @@ class PassengerList {
     this.adminIP = ""; // Will be set to your IP
     this.init();
   }
-  
+
   init() {
     // Check admin status first
     this.checkAdminStatus();
@@ -22,14 +22,15 @@ class PassengerList {
       // Your IP address - replace with your actual IP
       const allowedAdminIPs = [
         "108.77.151.214", // Your actual IP address
-        "127.0.0.1",    // localhost for testing
-        "::1"           // IPv6 localhost
+        "127.0.0.1", // localhost for testing
+        "::1", // IPv6 localhost
       ];
 
       // Check if we're running locally first
-      const isLocalhost = window.location.hostname === 'localhost' || 
-                         window.location.hostname === '127.0.0.1' || 
-                         window.location.hostname === '::1';
+      const isLocalhost =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1" ||
+        window.location.hostname === "::1";
 
       if (isLocalhost) {
         console.log("🏠 Running on localhost - Admin access granted");
@@ -39,22 +40,21 @@ class PassengerList {
       }
 
       // If not localhost, check public IP
-      const response = await fetch('https://api.ipify.org?format=json');
+      const response = await fetch("https://api.ipify.org?format=json");
       const data = await response.json();
       const userIP = data.ip;
-      
+
       console.log(`User IP: ${userIP}`);
-      
+
       // Check if user IP is in admin list
       this.isAdmin = allowedAdminIPs.includes(userIP);
-      
+
       if (this.isAdmin) {
         console.log("🔑 Admin access granted based on IP");
         this.activateAdminMode();
       } else {
         console.log("👤 Regular user access");
       }
-      
     } catch (error) {
       console.error("Could not verify IP:", error);
       this.isAdmin = false;
@@ -77,10 +77,14 @@ class PassengerList {
       if (!window.FirebaseService) {
         console.error("Firebase service not available");
         return;
-      }
-
-      // Set up real-time listener for passengers
+      }      // Set up real-time listener for passengers
       window.FirebaseService.onPassengersChange((passengers) => {
+        console.log("🔍 Debug - Received passengers from Firebase:", passengers);
+        console.log("🔍 Debug - Number of passengers:", passengers.length);
+        if (passengers.length > 0) {
+          console.log("🔍 Debug - First passenger structure:", passengers[0]);
+        }
+        
         this.passengers = passengers;
         this.filteredPassengers = [...this.passengers];
         this.displayPassengers();
@@ -488,7 +492,6 @@ class PassengerList {
       this.deletePassenger(passenger);
     }
   }
-
   // Delete a passenger (admin only)
   async deletePassenger(passenger) {
     if (!this.isAdminMode()) {
@@ -497,28 +500,37 @@ class PassengerList {
       return;
     }
 
+    // Debug logging
+    console.log("🔍 Debug - Attempting to delete passenger:", passenger);
+    console.log("🔍 Debug - Passenger firebaseKey:", passenger.firebaseKey);
+    console.log("🔍 Debug - Passenger ID:", passenger.id);
+
     try {
       let result;
 
       // Try to delete using Firebase key first (more efficient)
       if (passenger.firebaseKey) {
+        console.log("🔍 Debug - Using firebaseKey for deletion");
         result = await window.FirebaseService.removePassenger(
           passenger.firebaseKey
         );
       } else {
+        console.log("🔍 Debug - Using ID for deletion (fallback)");
         // Fallback to ID-based deletion
         result = await window.FirebaseService.removePassengerById(passenger.id);
       }
 
+      console.log("🔍 Debug - Delete result:", result);
+
       if (result.success) {
-        console.log("Passenger deleted successfully by admin");
+        console.log("✅ Passenger deleted successfully by admin");
         // The real-time listener will automatically update the display
       } else {
-        console.error("Failed to delete passenger:", result.error);
+        console.error("❌ Failed to delete passenger:", result.error);
         alert("Failed to delete passenger. Please try again.");
       }
     } catch (error) {
-      console.error("Error deleting passenger:", error);
+      console.error("💥 Error deleting passenger:", error);
       alert(
         "An error occurred while deleting the passenger. Please try again."
       );
