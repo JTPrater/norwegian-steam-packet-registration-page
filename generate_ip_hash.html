@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generate IP Hash</title>
+  </head>
+  <body>
+    <h1>Generate IP Hash for Admin System</h1>
+    <p>This tool generates the secure hash for your IP address.</p>
+
+    <script>
+      // Hash function (same as in list.js)
+      async function hashString(str) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(str);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        return hashHex;
+      }
+
+      // Generate hash for your IP
+      async function generateHash() {
+        const yourIP = "108.77.151.214";
+        const localhost = "127.0.0.1";
+        const ipv6localhost = "::1";
+
+        const yourHash = await hashString(yourIP);
+        const localhostHash = await hashString(localhost);
+        const ipv6Hash = await hashString(ipv6localhost);
+
+        console.log("=== IP HASHES FOR ADMIN SYSTEM ===");
+        console.log(`Your IP (${yourIP}): ${yourHash}`);
+        console.log(`Localhost (${localhost}): ${localhostHash}`);
+        console.log(`IPv6 Localhost (${ipv6localhost}): ${ipv6Hash}`);
+
+        document.body.innerHTML += `
+                <h2>Generated Hashes:</h2>
+                <p><strong>Your IP Hash:</strong><br><code>${yourHash}</code></p>
+                <p><strong>Localhost Hash:</strong><br><code>${localhostHash}</code></p>
+                <p><strong>IPv6 Localhost Hash:</strong><br><code>${ipv6Hash}</code></p>
+                <p><em>Copy the "Your IP Hash" value and replace the first hash in the allowedAdminHashes array in list.js</em></p>
+            `;
+      }
+
+      // Generate when page loads
+      generateHash();
+    </script>
+  </body>
+</html>

@@ -4,9 +4,11 @@
 async function hashString(str) {
   const encoder = new TextEncoder();
   const data = encoder.encode(str);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const hashHex = hashArray
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
   return hashHex;
 }
 
@@ -25,9 +27,10 @@ class PassengerList {
     // Wait for Firebase to be available, then load passengers
     this.waitForFirebase();
     this.setupEventListeners();
-  }  // Check if current user is admin based on IP
+  } // Check if current user is admin based on IP
   async checkAdminStatus() {
-    try {      // Hash-based admin verification (secure)
+    try {
+      // Hash-based admin verification (secure)
       const allowedAdminHashes = [
         "e4c570bef2b98009bd67ee6a3dd95e3d0b8ba251e7510d84f6dbf25421f65d3d", // Your IP hash
         "12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0", // localhost hash
@@ -50,7 +53,7 @@ class PassengerList {
       // If not localhost, check public IP
       const response = await fetch("https://api.ipify.org?format=json");
       const data = await response.json();
-      const userIP = data.ip;      // Hash the IP for secure comparison
+      const userIP = data.ip; // Hash the IP for secure comparison
       const ipHash = await hashString(userIP);
       console.log("🔐 IP verification complete");
 
@@ -138,162 +141,7 @@ class PassengerList {
     if (refreshBtn) {
       refreshBtn.addEventListener("click", () => {
         this.handleSearch();
-      });
-    }
-
-    // Admin functionality setup
-    this.setupAdminListeners();
-    this.setupSecretKeyCombo();
-  }
-
-  // Setup admin-specific event listeners
-  setupAdminListeners() {
-    const adminLoginBtn = document.getElementById("adminLoginBtn");
-    const cancelAdminBtn = document.getElementById("cancelAdminBtn");
-    const exitAdminBtn = document.getElementById("exitAdminBtn");
-    const adminPassword = document.getElementById("adminPassword");
-
-    if (adminLoginBtn) {
-      adminLoginBtn.addEventListener("click", () => this.handleAdminLogin());
-    }
-
-    if (cancelAdminBtn) {
-      cancelAdminBtn.addEventListener("click", () => this.hideAdminLogin());
-    }
-
-    if (exitAdminBtn) {
-      exitAdminBtn.addEventListener("click", () => this.exitAdminMode());
-    }
-
-    if (adminPassword) {
-      adminPassword.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") {
-          this.handleAdminLogin();
-        }
-        if (e.key === "Escape") {
-          this.hideAdminLogin();
-        }
-      });
-    }
-  }
-  // Setup secret key combination (Ctrl+Shift+A+D+M+I+N)
-  setupSecretKeyCombo() {
-    let keySequence = [];
-    const secretSequence = ["a", "d", "m", "i", "n"];
-    let clickCount = 0;
-    let clickTimer = null;
-
-    // Method 1: Key combination
-    document.addEventListener("keydown", (e) => {
-      // Debug logging (remove in production)
-      console.log(`Key: ${e.key}, Ctrl: ${e.ctrlKey}, Shift: ${e.shiftKey}`);
-
-      // Only activate if Ctrl+Shift is held
-      if (e.ctrlKey && e.shiftKey) {
-        const key = e.key.toLowerCase();
-        console.log(`Valid combo key: ${key}`);
-
-        // Add key to sequence
-        keySequence.push(key);
-        console.log(`Current sequence: [${keySequence.join(", ")}]`);
-
-        // Keep only the last 5 keys
-        if (keySequence.length > 5) {
-          keySequence.shift();
-        }
-
-        // Check if sequence matches
-        if (
-          keySequence.length === 5 &&
-          keySequence.join("") === secretSequence.join("")
-        ) {
-          console.log("🎉 Admin key sequence matched!");
-          this.showAdminLogin();
-          keySequence = []; // Reset sequence
-          e.preventDefault();
-        }
-      } else {
-        // Reset sequence if Ctrl+Shift not held
-        keySequence = [];
-      }
-
-      // Method 2: Simple backup - Ctrl+Alt+Delete (but don't actually delete)
-      if (e.ctrlKey && e.altKey && e.key.toLowerCase() === "delete") {
-        console.log("🎉 Admin backup key detected!");
-        this.showAdminLogin();
-        e.preventDefault();
-      }
-
-      // Method 3: Another backup - F12 + Ctrl
-      if (e.ctrlKey && e.key === "F12") {
-        console.log("🎉 Admin F12 backup detected!");
-        this.showAdminLogin();
-        e.preventDefault();
-      }
-    });
-
-    // Method 4: Triple-click on passenger count as backup
-    const passengerCount = document.getElementById("passengerCount");
-    if (passengerCount) {
-      passengerCount.addEventListener("click", () => {
-        clickCount++;
-
-        if (clickTimer) {
-          clearTimeout(clickTimer);
-        }
-
-        clickTimer = setTimeout(() => {
-          clickCount = 0;
-        }, 1000); // Reset after 1 second
-
-        if (clickCount === 5) {
-          // 5 clicks
-          console.log("🎉 Admin triple-click detected!");
-          this.showAdminLogin();
-          clickCount = 0;
-        }
-      });
-    }
-  }
-
-  // Show admin login modal
-  showAdminLogin() {
-    const adminLogin = document.getElementById("adminLogin");
-    const adminPassword = document.getElementById("adminPassword");
-
-    if (adminLogin) {
-      adminLogin.style.display = "flex";
-      if (adminPassword) {
-        adminPassword.focus();
-        adminPassword.value = "";
-      }
-    }
-  }
-
-  // Hide admin login modal
-  hideAdminLogin() {
-    const adminLogin = document.getElementById("adminLogin");
-    if (adminLogin) {
-      adminLogin.style.display = "none";
-    }
-  }
-
-  // Handle admin login
-  handleAdminLogin() {
-    const adminPassword = document.getElementById("adminPassword");
-    const correctPassword = "NorwegianSteam2025!"; // Change this to your preferred password
-
-    if (adminPassword && adminPassword.value === correctPassword) {
-      this.activateAdminMode();
-      this.hideAdminLogin();
-      adminPassword.value = "";
-    } else {
-      alert("Incorrect password!");
-      if (adminPassword) {
-        adminPassword.value = "";
-        adminPassword.focus();
-      }
-    }
+      });    }
   }
 
   // Activate admin mode
