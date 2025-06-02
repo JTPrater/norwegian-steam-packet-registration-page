@@ -1,0 +1,25 @@
+# Node.js dependencies (not needed for GitHub Pages)
+node_modules/
+
+# Server files (not needed for GitHub Pages)
+server.js
+package.json
+package-lock.json
+
+# Data directories (not needed for GitHub Pages)
+data/
+uploads/
+
+# Demo/development files
+firebase-config-demo.js
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Log files
+*.log

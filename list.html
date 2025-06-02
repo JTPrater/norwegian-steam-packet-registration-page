@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Passenger List - Norwegian Steam Packet Company</title>
+    <link rel="stylesheet" href="list.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="logo-area">
+          <img src="logo bro.png" alt="Site Logo" />
+        </div>
+        <div class="header-text-content">
+          <h1>NORWEGIAN STEAM PACKET COMPANY</h1>
+          <p>Current Passenger Manifest</p>
+          <p>
+            <a href="index.html" class="registration-link"
+              >Back to Registration</a
+            >
+          </p>
+        </div>
+      </header>
+
+      <main>
+        <section class="passenger-list-section">
+          <div class="list-controls">
+            <div class="search-bar">
+              <input
+                type="text"
+                id="searchInput"
+                placeholder="Search passengers by name..."
+              />
+              <button id="searchBtn">Search</button>
+            </div>
+            <div class="filter-controls">
+              <select id="genderFilter">
+                <option value="">All Genders</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+              <button id="clearFilters">Clear Filters</button>
+              <button id="refreshBtn">Refresh List</button>
+            </div>
+          </div>
+
+          <div class="passenger-count">
+            <p>Total Passengers: <span id="passengerCount">0</span></p>
+          </div>
+
+          <div class="passenger-table-container">
+            <table class="passenger-table">
+              <thead>
+                <tr>
+                  <th>Avatar</th>
+                  <th>Title</th>
+                  <th>Name</th>
+                  <th>Gender</th>
+                  <th>Date of Birth</th>
+                  <th>Luggage</th>
+                  <th>Registration Date</th>
+                </tr>
+              </thead>
+              <tbody id="passengerTableBody">
+                <!-- Passenger data will be populated here by JavaScript -->
+              </tbody>
+            </table>
+          </div>
+
+          <div id="noPassengers" class="no-passengers" style="display: none">
+            <p>No passengers have registered yet.</p>
+            <p><a href="index.html">Be the first to register!</a></p>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <p>
+          &copy; 2025 Norwegian Steam Packet Company - Safe Voyages Since 1825
+        </p>
+      </footer>
+    </div>
+
+    <!-- Firebase SDK v8 (Compatible) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="list.js"></script>
+  </body>
+</html>

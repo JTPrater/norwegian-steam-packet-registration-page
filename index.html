@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Character Creation</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="logo-area">
+          <img src="logo bro.png" alt="Site Logo" />
+        </div>
+        <div class="header-text-content">
+          <h1>NORWEGIAN STEAM PACKET COMPANY</h1>
+          <p>Please fill in the details below to register for the voyage.</p>
+          <p>
+            <a href="list.html" class="passenger-list-link"
+              >View Passenger List</a
+            >
+          </p>
+        </div>
+
+        <div class="header-buttons"></div>
+      </header>
+
+      <main>
+        <section class="welcome-section">
+          <div class="character-display">
+            <div class="character-image-placeholder">
+              <img
+                id="characterDisplayImage"
+                src="standard_male.png"
+                alt="Character Avatar"
+                width="150"
+                height="150"
+              />
+            </div>
+            <input
+              type="file"
+              id="avatarUpload"
+              accept="image/*"
+              style="display: none"
+            />
+            <div class="character-options">
+              <button class="icon-btn" aria-label="Upload picture"></button>
+              <button class="reset-btn">Reset</button>
+            </div>
+          </div>
+        </section>
+
+        <form class="character-form">
+          <div class="form-row">
+            <label>GENDER</label>
+            <div class="gender-options">
+              <input
+                type="radio"
+                id="male"
+                name="gender"
+                value="male"
+                checked
+              />
+              <label for="male">MALE</label>
+              <input type="radio" id="female" name="gender" value="female" />
+              <label for="female">FEMALE</label>
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="title">TITLE</label>
+            <input type="text" id="title" name="title" />
+          </div>
+          <div class="form-row">
+            <label for="forename">FORENAME</label>
+            <input type="text" id="forename" name="forename" />
+          </div>
+          <div class="form-row">
+            <label for="surname">SURNAME</label>
+            <input type="text" id="surname" name="surname" />
+          </div>
+          <div class="form-row">
+            <label for="luggage">LUGGAGE (5 items max)</label>
+            <div class="luggage-fields">
+              <div class="luggage-item">
+                <input
+                  type="text"
+                  id="luggage1"
+                  name="luggage1"
+                  placeholder="Item 1"
+                />
+              </div>
+              <div class="luggage-item">
+                <input
+                  type="text"
+                  id="luggage2"
+                  name="luggage2"
+                  placeholder="Item 2"
+                />
+              </div>
+              <div class="luggage-item">
+                <input
+                  type="text"
+                  id="luggage3"
+                  name="luggage3"
+                  placeholder="Item 3"
+                />
+              </div>
+              <div class="luggage-item">
+                <input
+                  type="text"
+                  id="luggage4"
+                  name="luggage4"
+                  placeholder="Item 4"
+                />
+              </div>
+              <div class="luggage-item">
+                <input
+                  type="text"
+                  id="luggage5"
+                  name="luggage5"
+                  placeholder="Item 5"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <label>DATE OF BIRTH</label>
+            <div class="dob-fields">
+              <input
+                type="text"
+                id="dob_month"
+                name="dob_month"
+                placeholder="MM"
+                maxlength="2"
+              />
+              <span>/</span>
+              <input
+                type="text"
+                id="dob_day"
+                name="dob_day"
+                placeholder="DD"
+                maxlength="2"
+              />
+              <span>/</span>
+              <input
+                type="text"
+                id="dob_year"
+                name="dob_year"
+                placeholder="YYYY"
+                maxlength="4"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="bio">CHARACTER BIO</label>
+            <textarea id="bio" name="bio" rows="4"></textarea>
+          </div>
+          <div class="form-row">
+            <button type="submit" class="btn-register">REGISTER</button>
+          </div>
+        </form>
+      </main>
+    </div>
+    <!-- Firebase SDK v8 (Compatible) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="java.js"></script>
+  </body>
+</html>
