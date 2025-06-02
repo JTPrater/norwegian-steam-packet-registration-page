@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Admin Debug Test - Norwegian Steam Packet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 800px;
+        }
+        .debug {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .error {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .delete-btn {
+            background: #dc3545;
+        }
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        .passenger-row {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Admin Debug Test</h1>
+        <p>This page will help us test and debug the admin delete functionality.</p>
+
+        <h3>Actions:</h3>
+        <button onclick="testFirebaseConnection()">Test Firebase Connection</button>
+        <button onclick="loadPassengers()">Load Passengers</button>
+        <button onclick="addTestPassenger()">Add Test Passenger</button>
+        <button onclick="clearLogs()">Clear Logs</button>
+
+        <h3>Current Passengers:</h3>
+        <div id="passengerList"></div>
+
+        <h3>Debug Logs:</h3>
+        <div id="debugLogs"></div>
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-storage-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        let currentPassengers = [];
+
+        function addLog(message, type = 'debug') {
+            const debugLogs = document.getElementById('debugLogs');
+            const logDiv = document.createElement('div');
+            logDiv.className = `debug ${type}`;
+            logDiv.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            debugLogs.appendChild(logDiv);
+            debugLogs.scrollTop = debugLogs.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLogs() {
+            document.getElementById('debugLogs').innerHTML = '';
+            document.getElementById('passengerList').innerHTML = '';
+        }
+
+        async function testFirebaseConnection() {
+            addLog('Testing Firebase connection...');
+            try {
+                if (window.FirebaseService) {
+                    addLog('✅ FirebaseService is available', 'success');
+                    
+                    // Test database connection
+                    const testRef = firebase.database().ref('.info/connected');
+                    testRef.on('value', (snapshot) => {
+                        if (snapshot.val() === true) {
+                            addLog('✅ Firebase database connected', 'success');
+                        } else {
+                            addLog('❌ Firebase database disconnected', 'error');
+                        }
+                    });
+                } else {
+                    addLog('❌ FirebaseService not available', 'error');
+                }
+            } catch (error) {
+                addLog(`❌ Firebase connection error: ${error.message}`, 'error');
+            }
+        }
+
+        function loadPassengers() {
+            addLog('Loading passengers...');
+            try {
+                window.FirebaseService.onPassengersChange((passengers) => {
+                    addLog(`📦 Received ${passengers.length} passengers from Firebase`);
+                    currentPassengers = passengers;
+                    displayPassengers(passengers);
+                });
+            } catch (error) {
+                addLog(`❌ Error loading passengers: ${error.message}`, 'error');
+            }
+        }
+
+        function displayPassengers(passengers) {
+            const listDiv = document.getElementById('passengerList');
+            listDiv.innerHTML = '';
+
+            if (passengers.length === 0) {
+                listDiv.innerHTML = '<p>No passengers found.</p>';
+                return;
+            }
+
+            passengers.forEach((passenger, index) => {
+                const passengerDiv = document.createElement('div');
+                passengerDiv.className = 'passenger-row';
+                
+                const info = document.createElement('div');
+                info.innerHTML = `
+                    <strong>${passenger.forename} ${passenger.surname}</strong><br>
+                    <small>ID: ${passenger.id} | Firebase Key: ${passenger.firebaseKey || 'missing'}</small>
+                `;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = '🗑️ Delete';
+                deleteBtn.onclick = () => testDeletePassenger(passenger);
+                
+                passengerDiv.appendChild(info);
+                passengerDiv.appendChild(deleteBtn);
+                listDiv.appendChild(passengerDiv);
+            });
+        }
+
+        async function addTestPassenger() {
+            addLog('Adding test passenger...');
+            try {
+                const testPassenger = {
+                    forename: 'Test',
+                    surname: `User${Date.now()}`,
+                    gender: 'male',
+                    dob_day: '15',
+                    dob_month: '06',
+                    dob_year: '1990',
+                    title: 'Mr',
+                    luggage1: 'Test luggage'
+                };
+
+                const result = await window.FirebaseService.addPassenger(testPassenger);
+                if (result.success) {
+                    addLog('✅ Test passenger added successfully', 'success');
+                } else {
+                    addLog(`❌ Failed to add test passenger: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`❌ Error adding test passenger: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDeletePassenger(passenger) {
+            addLog(`🗑️ Testing delete for: ${passenger.forename} ${passenger.surname}`);
+            addLog(`🔍 Passenger data: ${JSON.stringify(passenger)}`);
+
+            try {
+                let result;
+
+                if (passenger.firebaseKey) {
+                    addLog(`🔑 Using firebaseKey: ${passenger.firebaseKey}`);
+                    result = await window.FirebaseService.removePassenger(passenger.firebaseKey);
+                } else {
+                    addLog(`🆔 Using ID: ${passenger.id}`);
+                    result = await window.FirebaseService.removePassengerById(passenger.id);
+                }
+
+                addLog(`📊 Delete result: ${JSON.stringify(result)}`);
+
+                if (result.success) {
+                    addLog('✅ Passenger deleted successfully', 'success');
+                } else {
+                    addLog(`❌ Delete failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`💥 Delete error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-start when page loads
+        window.addEventListener('load', () => {
+            addLog('🚀 Debug page loaded');
+            setTimeout(testFirebaseConnection, 1000);
+            setTimeout(loadPassengers, 2000);
+        });
+    </script>
+</body>
+</html>
