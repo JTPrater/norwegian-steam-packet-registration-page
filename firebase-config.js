@@ -51,39 +51,75 @@ window.FirebaseService = {
       console.error("Error adding passenger:", error);
       return { success: false, error: error.message };
     }
-  },
-  // Get all passengers with real-time updates
+  },  // Get all passengers with real-time updates
   onPassengersChange(callback) {
+    console.log("🔍 Firebase - Setting up real-time listener");
+    
     const passengersRef = database.ref("passengers");
     const listener = passengersRef.on("value", (snapshot) => {
       const data = snapshot.val();
+      console.log("🔍 Firebase - Real-time update received, raw data:", data);
+      
       const passengers = data
-        ? Object.keys(data).map((key) => ({
-            ...data[key],
-            firebaseKey: key, // Add Firebase key for deletion
-          }))
+        ? Object.keys(data).map((key) => {
+            const passenger = {
+              ...data[key],
+              firebaseKey: key, // Add Firebase key for deletion
+            };
+            return passenger;
+          })
         : [];
+      
+      console.log("🔍 Firebase - Processed passengers:", passengers.length);
+      if (passengers.length > 0) {
+        console.log("🔍 Firebase - First passenger sample:", passengers[0]);
+      }
+      
       callback(passengers);
     });
 
+    console.log("🔍 Firebase - Real-time listener registered");
     return listener;
   },
-
   // Remove a passenger by Firebase key (Admin only)
   async removePassenger(firebaseKey) {
     try {
+      console.log("🔍 Firebase - Removing passenger with key:", firebaseKey);
+      
+      if (!firebaseKey || firebaseKey.trim() === '') {
+        throw new Error("Invalid Firebase key provided");
+      }
+
       const passengerRef = database.ref(`passengers/${firebaseKey}`);
+      
+      // First check if the passenger exists
+      const snapshot = await passengerRef.once('value');
+      if (!snapshot.exists()) {
+        console.warn("⚠️ Passenger not found for key:", firebaseKey);
+        return { success: false, error: "Passenger not found" };
+      }
+
+      const passengerData = snapshot.val();
+      console.log("🔍 Firebase - Found passenger to delete:", passengerData);
+
       await passengerRef.remove();
+      console.log("✅ Firebase - Passenger removed successfully");
+      
       return { success: true };
     } catch (error) {
-      console.error("Error removing passenger:", error);
+      console.error("❌ Firebase - Error removing passenger:", error);
       return { success: false, error: error.message };
     }
   },
-
   // Remove a passenger by their ID (Admin only)
   async removePassengerById(passengerId) {
     try {
+      console.log("🔍 Firebase - Removing passenger with ID:", passengerId);
+      
+      if (!passengerId || passengerId.toString().trim() === '') {
+        throw new Error("Invalid passenger ID provided");
+      }
+
       const passengersRef = database.ref("passengers");
       const snapshot = await passengersRef
         .orderByChild("id")
@@ -92,14 +128,22 @@ window.FirebaseService = {
       const data = snapshot.val();
 
       if (data) {
-        const firebaseKey = Object.keys(data)[0];
-        await this.removePassenger(firebaseKey);
-        return { success: true };
+        const firebaseKeys = Object.keys(data);
+        console.log("🔍 Firebase - Found passenger(s) with ID:", firebaseKeys);
+        
+        if (firebaseKeys.length > 1) {
+          console.warn("⚠️ Multiple passengers found with same ID, deleting first one");
+        }
+        
+        const firebaseKey = firebaseKeys[0];
+        const result = await this.removePassenger(firebaseKey);
+        return result;
       } else {
+        console.warn("⚠️ No passenger found with ID:", passengerId);
         return { success: false, error: "Passenger not found" };
       }
     } catch (error) {
-      console.error("Error removing passenger by ID:", error);
+      console.error("❌ Firebase - Error removing passenger by ID:", error);
       return { success: false, error: error.message };
     }
   },

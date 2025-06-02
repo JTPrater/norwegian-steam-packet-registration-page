@@ -491,8 +491,7 @@ class PassengerList {
     if (confirmed) {
       this.deletePassenger(passenger);
     }
-  }
-  // Delete a passenger (admin only)
+  }  // Delete a passenger (admin only)
   async deletePassenger(passenger) {
     if (!this.isAdminMode()) {
       console.error("Delete attempted without admin privileges");
@@ -505,34 +504,53 @@ class PassengerList {
     console.log("🔍 Debug - Passenger firebaseKey:", passenger.firebaseKey);
     console.log("🔍 Debug - Passenger ID:", passenger.id);
 
+    // Validation checks
+    if (!passenger) {
+      console.error("❌ No passenger object provided");
+      alert("Error: No passenger data provided.");
+      return;
+    }
+
+    if (!passenger.firebaseKey && !passenger.id) {
+      console.error("❌ Passenger has no firebaseKey or ID");
+      alert("Error: Cannot delete passenger - missing identifier.");
+      return;
+    }
+
     try {
       let result;
 
       // Try to delete using Firebase key first (more efficient)
-      if (passenger.firebaseKey) {
-        console.log("🔍 Debug - Using firebaseKey for deletion");
+      if (passenger.firebaseKey && passenger.firebaseKey.trim() !== '') {
+        console.log("🔍 Debug - Using firebaseKey for deletion:", passenger.firebaseKey);
         result = await window.FirebaseService.removePassenger(
           passenger.firebaseKey
         );
-      } else {
-        console.log("🔍 Debug - Using ID for deletion (fallback)");
+      } else if (passenger.id && passenger.id.trim() !== '') {
+        console.log("🔍 Debug - Using ID for deletion (fallback):", passenger.id);
         // Fallback to ID-based deletion
         result = await window.FirebaseService.removePassengerById(passenger.id);
+      } else {
+        console.error("❌ Invalid firebaseKey and ID");
+        alert("Error: Cannot delete passenger - invalid identifier.");
+        return;
       }
 
       console.log("🔍 Debug - Delete result:", result);
 
-      if (result.success) {
+      if (result && result.success) {
         console.log("✅ Passenger deleted successfully by admin");
+        const passengerName = `${passenger.forename} ${passenger.surname}`;
+        console.log(`✅ Deleted: ${passengerName}`);
         // The real-time listener will automatically update the display
       } else {
-        console.error("❌ Failed to delete passenger:", result.error);
-        alert("Failed to delete passenger. Please try again.");
+        console.error("❌ Failed to delete passenger:", result?.error || 'Unknown error');
+        alert(`Failed to delete passenger: ${result?.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error("💥 Error deleting passenger:", error);
       alert(
-        "An error occurred while deleting the passenger. Please try again."
+        `An error occurred while deleting the passenger: ${error.message}`
       );
     }
   }
