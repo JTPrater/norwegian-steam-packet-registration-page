@@ -8,15 +8,15 @@ echo Current directory: %CD%
 echo.
 
 echo Adding new files...
-git add .
+"C:\Program Files\Git\bin\git.exe" add .
 
 echo.
 echo Committing changes...
-git commit -m "Add secure admin-only delete system with secret key authentication"
+"C:\Program Files\Git\bin\git.exe" commit -m "SECURITY FIX: Replace hardcoded IP with secure hash-based admin system"
 
 echo.
 echo Pushing to GitHub...
-git push origin main
+"C:\Program Files\Git\bin\git.exe" push origin main
 
 echo.
 echo ================================================

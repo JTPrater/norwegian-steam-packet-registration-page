@@ -1,5 +1,15 @@
 // Passenger List JavaScript - Norwegian Steam Packet Company
 
+// Secure hash function for IP validation
+async function hashString(str) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
+
 class PassengerList {
   constructor() {
     this.passengers = [];
@@ -15,15 +25,13 @@ class PassengerList {
     // Wait for Firebase to be available, then load passengers
     this.waitForFirebase();
     this.setupEventListeners();
-  }
-  // Check if current user is admin based on IP
+  }  // Check if current user is admin based on IP
   async checkAdminStatus() {
-    try {
-      // Your IP address - replace with your actual IP
-      const allowedAdminIPs = [
-        "108.77.151.214", // Your actual IP address
-        "127.0.0.1", // localhost for testing
-        "::1", // IPv6 localhost
+    try {      // Hash-based admin verification (secure)
+      const allowedAdminHashes = [
+        "e4c570bef2b98009bd67ee6a3dd95e3d0b8ba251e7510d84f6dbf25421f65d3d", // Your IP hash
+        "12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0", // localhost hash
+        "eff8e7ca506627fe15dda5e0e512fcaad70b6d520f37cc76597fdb4f2d83a1a3", // IPv6 localhost hash
       ];
 
       // Check if we're running locally first
@@ -42,12 +50,12 @@ class PassengerList {
       // If not localhost, check public IP
       const response = await fetch("https://api.ipify.org?format=json");
       const data = await response.json();
-      const userIP = data.ip;
+      const userIP = data.ip;      // Hash the IP for secure comparison
+      const ipHash = await hashString(userIP);
+      console.log("🔐 IP verification complete");
 
-      console.log(`User IP: ${userIP}`);
-
-      // Check if user IP is in admin list
-      this.isAdmin = allowedAdminIPs.includes(userIP);
+      // Check if user IP hash is in admin list
+      this.isAdmin = allowedAdminHashes.includes(ipHash);
 
       if (this.isAdmin) {
         console.log("🔑 Admin access granted based on IP");
@@ -77,14 +85,17 @@ class PassengerList {
       if (!window.FirebaseService) {
         console.error("Firebase service not available");
         return;
-      }      // Set up real-time listener for passengers
+      } // Set up real-time listener for passengers
       window.FirebaseService.onPassengersChange((passengers) => {
-        console.log("🔍 Debug - Received passengers from Firebase:", passengers);
+        console.log(
+          "🔍 Debug - Received passengers from Firebase:",
+          passengers
+        );
         console.log("🔍 Debug - Number of passengers:", passengers.length);
         if (passengers.length > 0) {
           console.log("🔍 Debug - First passenger structure:", passengers[0]);
         }
-        
+
         this.passengers = passengers;
         this.filteredPassengers = [...this.passengers];
         this.displayPassengers();
@@ -491,7 +502,7 @@ class PassengerList {
     if (confirmed) {
       this.deletePassenger(passenger);
     }
-  }  // Delete a passenger (admin only)
+  } // Delete a passenger (admin only)
   async deletePassenger(passenger) {
     if (!this.isAdminMode()) {
       console.error("Delete attempted without admin privileges");
@@ -521,13 +532,19 @@ class PassengerList {
       let result;
 
       // Try to delete using Firebase key first (more efficient)
-      if (passenger.firebaseKey && passenger.firebaseKey.trim() !== '') {
-        console.log("🔍 Debug - Using firebaseKey for deletion:", passenger.firebaseKey);
+      if (passenger.firebaseKey && passenger.firebaseKey.trim() !== "") {
+        console.log(
+          "🔍 Debug - Using firebaseKey for deletion:",
+          passenger.firebaseKey
+        );
         result = await window.FirebaseService.removePassenger(
           passenger.firebaseKey
         );
-      } else if (passenger.id && passenger.id.trim() !== '') {
-        console.log("🔍 Debug - Using ID for deletion (fallback):", passenger.id);
+      } else if (passenger.id && passenger.id.trim() !== "") {
+        console.log(
+          "🔍 Debug - Using ID for deletion (fallback):",
+          passenger.id
+        );
         // Fallback to ID-based deletion
         result = await window.FirebaseService.removePassengerById(passenger.id);
       } else {
@@ -544,14 +561,17 @@ class PassengerList {
         console.log(`✅ Deleted: ${passengerName}`);
         // The real-time listener will automatically update the display
       } else {
-        console.error("❌ Failed to delete passenger:", result?.error || 'Unknown error');
-        alert(`Failed to delete passenger: ${result?.error || 'Unknown error'}`);
+        console.error(
+          "❌ Failed to delete passenger:",
+          result?.error || "Unknown error"
+        );
+        alert(
+          `Failed to delete passenger: ${result?.error || "Unknown error"}`
+        );
       }
     } catch (error) {
       console.error("💥 Error deleting passenger:", error);
-      alert(
-        `An error occurred while deleting the passenger: ${error.message}`
-      );
+      alert(`An error occurred while deleting the passenger: ${error.message}`);
     }
   }
 }
